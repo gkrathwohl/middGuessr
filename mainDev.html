@@ -1,0 +1,313 @@
+
+
+
+
+<style>
+
+
+
+html{
+font-family:"Arial", Helvetica, sans-serif;
+font-size: 26;
+}
+
+#map{
+	height: 100%;
+        width: 50%;
+        float:left;
+}
+#left{
+		width: 48%;
+        float:left;
+	padding-right:16px;
+	//border:1;	
+
+}
+#image{
+		width:100%;
+box-shadow: 10px 10px 5px #888888;
+}
+#guess1, #guessButton, #next{
+	padding: 5px;
+	padding-right: 10px;
+	float:right;
+}
+#guess1, #score{
+padding:7;
+}
+
+</style>
+
+
+<html>
+<head>
+ <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
+ <script src="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+</head>
+<body>
+    <div id="fb-root"></div>
+    <script>
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '283070911844632',
+          status     : true,
+          xfbml      : true
+        });
+      };
+
+      (function(d, s, id){
+         var js, fjs = d.getElementsByTagName(s)[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement(s); js.id = id;
+         js.src = "//connect.facebook.net/en_US/all.js";
+         fjs.parentNode.insertBefore(js, fjs);
+       }(document, 'script', 'facebook-jssdk'));
+
+	
+
+    </script>
+
+
+<div id="left">
+
+<div id="score">Points: 0 </div>
+<div id="Tscore">Total Score: 0 </div>
+<div id="Hscore">High Score: </div>
+<button id="shareScore" onclick="shareScore()">Share Score</button>
+<div id="guess1"> 5 guesses left</div>
+<button id="next" onclick="reset()">Next</button>
+<button id="guessButton" onclick="guess()">Guess</button>
+<div id="pic"><img id="image"></div>
+
+</div>
+
+<div id="map"></div>
+
+
+</body>
+
+
+</html>
+
+<script src="imgs.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+
+
+function shareScore(){
+	FB.ui({
+ 		method: 'feed',
+  		link: 'go.middlebury.edu/guesswhere',
+ 		caption: 'I scored '+String(Hscore)+' points on MiddGuessr. Rank: '+String(rank),
+	}, function(response){});
+}
+
+
+/** Converts numeric degrees to radians */
+if (typeof(Number.prototype.toRad) === "undefined") {
+  Number.prototype.toRad = function() {
+    return this * Math.PI / 180;
+  }
+}
+
+function haver(lat1, lon1, lat2, lon2){
+	var R = 6371; // km
+	var dLat = (lat2-lat1).toRad();
+	var dLon = (lon2-lon1).toRad();
+	var lat1 = lat1.toRad();
+	var lat2 = lat2.toRad();
+	var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+	var d = R * c;
+	return d;
+}
+
+
+function newImg(imageArray){
+	var spot = imageArray[Math.floor(Math.random()*imageArray.length)];
+	var im = spot[0];
+	b = spot[1];
+	c = spot[2];
+	document.getElementById('image').src = im;
+}
+
+function reset(){
+	map.setView([44.0119, -73.1756], 16);
+
+	map.removeLayer(marker);
+	map.removeLayer(marker1);
+	map.removeLayer(line);
+	$('#next').hide();
+	newImg(a);
+
+	map.on('click', function(e) { 
+	var lat = (e.latlng.lat);
+       var lng = (e.latlng.lng);
+	p1 = lat;
+	p2 = lng;
+
+	if(typeof(marker)==='undefined'){
+		marker = L.marker([lat, lng]).addTo(map);      	
+	}else{
+		var newLatLng = new L.LatLng(lat, lng);
+		marker.setLatLng(newLatLng);        
+		marker.addTo(map); 
+	}
+
+	$('#guessButton').show();
+	
+ });
+
+
+
+}
+
+function drawLine(lat1, lon1, lat2, lon2){
+	var pointA = new L.LatLng(lat1, lon1);
+	var pointB = new L.LatLng(lat2, lon2);
+	var pointList = [pointA, pointB];
+
+	line = new L.Polyline(pointList, {
+		color: 'red',
+		weight: 3,
+		opacity: 0.5,
+		smoothFactor: 1
+	});
+	
+	map.addLayer(line);
+	map.fitBounds(line);
+}
+
+var map = L.map('map').setView([44.0119, -73.1756], 16);
+
+var b;
+var c;
+
+newImg(a);
+
+var marker;
+var line;
+var count = 5;
+var score = 0;
+var Tscore = 0;
+var Hscore = -999999;
+
+var p1;
+var p2;
+
+alert("Click the map where the photo was taken");
+
+$('#guessButton').hide();
+$('#next').hide();
+$('#shareScore').hide();
+
+map.on('click', function(e) { 
+	var lat = (e.latlng.lat);
+       var lng = (e.latlng.lng);
+	p1 = lat;
+	p2 = lng;
+
+	if(typeof(marker)==='undefined'){
+		marker = L.marker([lat, lng]).addTo(map);      	
+	}else{
+		var newLatLng = new L.LatLng(lat, lng);
+		marker.setLatLng(newLatLng);        
+		marker.addTo(map); 
+	}
+
+	$('#guessButton').show();
+
+
+	document.addEventListener('keypress', function (e) {
+    var key = e.which || e.keyCode;
+    if (key == 13) { // 13 is enter
+      guess();
+    }
+});	
+
+
+ });
+
+
+var rank = "";
+function done(){
+	if(Tscore<0){
+		rank = "Do you even go here?";
+	}else if(Tscore<200){
+		rank = "Freshman";
+	}else if(Tscore<500){
+		rank = "Sophomore";
+	}else if(Tscore<=910){
+		rank = "Junior";
+	}else if(Tscore>910){
+		rank = "Senior (or geography major) - you know your way around here";
+	}
+
+	if(Tscore > Hscore){
+		Hscore = Tscore;
+		document.getElementById("Hscore").innerHTML = "High Score: "+Hscore;
+	}
+
+
+	alert("Game Over \n\n Total Score: "+Tscore+" \n\n Rank: "+rank);
+	$('#shareScore').show();
+	count = 5;
+	document.getElementById("guess1").innerHTML = "5 guesses left";
+	document.getElementById("score").innerHTML = "Points: 0";
+	document.getElementById("Tscore").innerHTML = "Total Score: 0";
+
+	score = 0;
+	Tscore = 0;
+}
+
+function guess(){
+	marker1 = L.marker([b, c]).addTo(map);
+	drawLine(p1, p2, b, c);
+	count -= 1;
+	document.getElementById("guess1").innerHTML = count + " guesses left";
+	var dist = (haver(p1,p2, b, c)*1000).toFixed(0);
+	score = 200 - dist;
+	Tscore += score;
+
+
+	document.getElementById("score").innerHTML = "Points: "+score;
+	document.getElementById("Tscore").innerHTML = "Total Score: "+Tscore;
+	map.off('click');
+
+	alert(dist +" meters away\n\n" + score + " points");
+	$('#guessButton').hide();
+	$('#next').show();
+
+	
+	if(count == 0){
+		done();
+	}
+
+
+}
+
+
+L.tileLayer('http://otile1.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.jpg', {
+    //attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
+    maxZoom: 18
+}).addTo(map);
+
+
+
+</script>
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-46764554-4', 'middlebury.edu');
+  ga('send', 'pageview');
+
+</script>
+

@@ -1,0 +1,151 @@
+
+
+<style>
+
+#map{
+	height: 100%;
+        width: 50%;
+        float:left;
+}
+#left{
+		width: 50%;
+        float:left;
+}
+#image{
+		width:100%;
+}
+
+</style>
+
+
+<html>
+<head>
+ <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.css" />
+ <script src="http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+</head>
+<body>
+
+<div id="left">
+<div id="guess"> Guesses: 0</div>
+
+<button onclick="reset()">Next</button>
+<div id="pic"><img id="image"></div>
+
+</div>
+
+<div id="map"></div>
+
+
+</body>
+
+
+</html>
+
+<script src="imgs.js"></script>
+<script>
+
+/** Converts numeric degrees to radians */
+if (typeof(Number.prototype.toRad) === "undefined") {
+  Number.prototype.toRad = function() {
+    return this * Math.PI / 180;
+  }
+}
+
+function haver(lat1, lon1, lat2, lon2){
+	var R = 6371; // km
+	var dLat = (lat2-lat1).toRad();
+	var dLon = (lon2-lon1).toRad();
+	var lat1 = lat1.toRad();
+	var lat2 = lat2.toRad();
+	var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+	var d = R * c;
+	return d;
+}
+
+
+function newImg(imageArray){
+	var spot = imageArray[Math.floor(Math.random()*imageArray.length)];
+	var im = spot[0];
+	b = spot[1];
+	c = spot[2];
+	document.getElementById('image').src = im;
+}
+
+function reset(){
+	map.removeLayer(marker);
+	map.removeLayer(marker1);
+	map.removeLayer(line);
+	newImg(a);
+}
+
+function drawLine(lat1, lon1, lat2, lon2){
+	var pointA = new L.LatLng(lat1, lon1);
+	var pointB = new L.LatLng(lat2, lon2);
+	var pointList = [pointA, pointB];
+
+	line = new L.Polyline(pointList, {
+		color: 'red',
+		weight: 3,
+		opacity: 0.5,
+		smoothFactor: 1
+	});
+	
+	map.addLayer(line);
+}
+
+
+//a = [['c:\\users\\greg\\IMG_0132.JPG', 44.0119, -73.1756],['c:\\users\\greg\\IMG_0132.JPG', 44.0119, -73.1756],['c:\\users\\greg\\IMG_0132.JPG', 44.0119, -73.1756]];
+//a = [['c:\\users\\greg\\IMG_0132.JPG', 44.0105833333, -73.1750861111],['c:\\users\\greg\\IMG_0177.JPG', 44.0094638889, -73.175675]];
+
+
+
+var map = L.map('map').setView([44.0119, -73.1756], 16);
+
+var b;
+var c;
+
+newImg(a);
+
+//var marker = L.marker([b, c]).addTo(map);
+//var marker = L.marker([44.0119, -73.1756]).addTo(map);
+var marker;
+var line;
+var count = 0;
+
+map.on('click', function(e) { 
+
+	var lat = (e.latlng.lat);
+    var lng = (e.latlng.lng);
+    //var newLatLng = new L.LatLng(lat, lng);
+    //marker.setLatLng(newLatLng); 
+	marker = L.marker([lat, lng]).addTo(map);
+	drawLine(lat, lng, b, c);
+	marker1 = L.marker([b, c]).addTo(map);
+	count ++;
+	document.getElementById("guess").innerHTML = "Guesses: "+count;
+	alert((haver(lat,lng, b, c)*1000).toFixed(0) +" meters away");
+ });
+
+
+
+//L.tileLayer('http://{s}.tile.cloudmade.com/8ee2a50541944fb9bcedded5165f09d9/997/256/{z}/{x}/{y}.png', {
+    //attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
+//    maxZoom: 18
+//}).addTo(map);
+
+
+
+L.tileLayer('http://otile1.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.jpg', {
+    //attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
+    maxZoom: 18
+}).addTo(map);
+
+
+</script>
+
+
+
+
