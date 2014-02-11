@@ -1,3 +1,8 @@
+#specify image directory
+#this program reads location data and writes javascript file of array of [img src, lat, lng] for each image
+
+
+
 import glob
 import os
 from PIL import Image
